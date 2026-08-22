@@ -1,25 +1,39 @@
-# Catafesta Art Culinária — Deploy GitHub Pages
+# Catafesta Art Culinária — GitHub Pages
 
-Versão de produção do site, preparada para GitHub Pages.
+Pacote final de produção.
 
-## Estrutura
+## Publicação
 
-- `index.html` — página única com Home, Menu e carrinho.
-- `assets/css/styles.css` — estilos completos e responsivos.
-- `assets/js/main.js` — navegação, carrinho e integração com WhatsApp.
-- `assets/images/` — imagens WebP otimizadas.
-- `.nojekyll` — evita processamento desnecessário do Jekyll no GitHub Pages.
+Envie **o conteúdo desta pasta para a raiz do repositório**, de forma que `index.html` fique na raiz.
 
-## Publicar
+Estrutura principal:
 
-Envie **todo o conteúdo desta pasta** para a raiz do repositório. No GitHub, abra **Settings → Pages**, selecione a branch `main` e a pasta `/ (root)`.
+```text
+index.html
+.nojekyll
+robots.txt
+favicon.ico
+favicon-192.png
+favicon-512.png
+assets/
+  css/styles.css
+  js/main.js
+  images/
+  videos/
+```
 
-O site não depende de bibliotecas externas, frameworks, fontes remotas ou servidor. Os caminhos são relativos, então funciona tanto em domínio próprio quanto em GitHub Pages de projeto.
+No GitHub: **Settings → Pages → Deploy from a branch → main / root**.
 
-## WhatsApp
+## Configurações
 
-Número configurado no projeto: `+55 48 9654-5844`.
+- WhatsApp: **+55 (48) 99853-3354**
+- Instagram: **@catafestas.arteculinaria**
+- Desenvolvido por: **Linkefy**
 
-## Observação
+## Observações
 
-Os preços do Menu continuam provisórios/fictícios até a definição dos valores oficiais da Catafesta.
+- Home e Menu estão no mesmo `index.html`.
+- O carrinho é salvo no navegador e finaliza o pedido pelo WhatsApp.
+- Imagens estão em WebP e carregam sob demanda quando possível.
+- Vídeos ficam em `assets/videos/` e usam posters próprios.
+- O site usa caminhos relativos, então funciona em GitHub Pages mesmo em repositório de projeto.

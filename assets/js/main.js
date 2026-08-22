@@ -1,5 +1,5 @@
 const SITE_CONFIG = {
-  whatsappNumber: '554896545844'
+  whatsappNumber: '5548998533354'
 };
 
 const header = document.querySelector('.site-header');
@@ -58,7 +58,7 @@ function setDockState(isMenu){
   if(!dockMenu) return;
   const kicker=dockMenu.querySelector('.dock-kicker');
   const strong=dockMenu.querySelector('strong');
-  dockMenu.href=isMenu?'#inicio':'#menu';
+  dockMenu.href=isMenu?'#inicio':'#menu-categorias';
   if(kicker) kicker.textContent=isMenu?'VOLTAR':'VER';
   if(strong) strong.textContent=isMenu?'Início':'Menu';
 }
@@ -108,7 +108,7 @@ const year=document.getElementById('year');
 if(year) year.textContent=new Date().getFullYear();
 
 /* ===== Simple order cart ===== */
-const CART_STORAGE_KEY='catafestaPedidoV1';
+const CART_STORAGE_KEY='catafestaPedidoV2';
 const CART_NAME_KEY='catafestaPedidoNomeV1';
 const cartTrigger=document.querySelector('.cart-trigger');
 const cartCount=document.querySelector('.cart-count');
@@ -134,7 +134,7 @@ function loadCart(){
 function saveCart(){try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(cart));}catch(e){}}
 function cartQuantity(){return cart.reduce((sum,item)=>sum+item.qty,0);}
 function cartValue(){return cart.reduce((sum,item)=>sum+(Number(item.price)||0)*item.qty,0);}
-function productThumb(card){const img=card.querySelector('.menu-product-media img');return img?img.getAttribute('src'):'';}
+function productThumb(card){const img=card.querySelector('.menu-product-media img,.product-gallery img');return img?img.getAttribute('src'):'';}
 function escapeHtml(text){return String(text||'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
 function renderCart(){
   if(!cartItemsEl) return;
@@ -158,11 +158,21 @@ function showCartToast(name){
 }
 function addCardToCart(card){
   if(!card) return;
-  const id=card.id||`item-${Date.now()}`;
+  const baseId=card.id||`item-${Date.now()}`;
+  const baseName=card.dataset.productName||'Produto Catafesta';
+  const option=card.querySelector('.product-option');
+  const selected=option?.selectedOptions?.[0];
+  const optionValue=selected?.value||'';
+  const optionName=selected?.dataset.cartName||'';
+  const id=optionValue?`${baseId}--${optionValue}`:baseId;
+  const name=optionName?`${baseName} — ${optionName}`:baseName;
+  const price=selected?Number(selected.dataset.price)||0:Number(card.dataset.productPrice)||0;
+  const priceLabel=selected?.dataset.cartLabel||card.dataset.productPriceLabel||moneyBRL(price);
+  if(price<=0) return;
   const existing=cart.find(i=>i.id===id);
   if(existing) existing.qty+=1;
-  else cart.push({id,name:card.dataset.productName||'Produto Catafesta',price:Number(card.dataset.productPrice)||0,priceLabel:card.dataset.productPriceLabel||'',image:productThumb(card),qty:1});
-  saveCart();renderCart();showCartToast(card.dataset.productName||'Produto');
+  else cart.push({id,name,price,priceLabel,image:productThumb(card),qty:1});
+  saveCart();renderCart();showCartToast(name);
   const btn=card.querySelector('.add-to-cart');if(btn){btn.classList.add('just-added');const label=btn.querySelector('span');const previous=label?label.textContent:'';if(label)label.textContent='Adicionado ✓';setTimeout(()=>{btn.classList.remove('just-added');if(label)label.textContent=previous||'Adicionar';},1000);}
 }
 function openCart(){if(!cartDrawer||!cartOverlay)return;if(cartToast){cartToast.classList.remove('show');clearTimeout(toastTimer);}document.body.classList.add('cart-open');cartDrawer.setAttribute('aria-hidden','false');cartOverlay.hidden=false;setTimeout(()=>cartClose&&cartClose.focus(),30);}
@@ -176,7 +186,7 @@ function updateCartItem(id,action){
 }
 function checkoutMessage(customerName){
   const lines=cart.map(item=>`${item.qty}x ${item.name} — ${item.priceLabel}`);
-  return `Olá Catafesta Art Culinária! Meu nome é ${customerName} e gostaria de realizar o seguinte pedido:\n\n${lines.join('\n')}\n\nTotal estimado = ${moneyBRL(cartValue())}\n\nGostaria de confirmar a disponibilidade, sabores e detalhes do pedido.`;
+  return `Olá Catafesta Art Culinária! Meu nome é ${customerName} e gostaria de realizar o seguinte pedido:\n\n${lines.join('\n')}\n\nTotal = ${moneyBRL(cartValue())}\n\nGostaria de confirmar a disponibilidade, sabores e detalhes do pedido.`;
 }
 
 document.addEventListener('click',e=>{
@@ -195,5 +205,65 @@ if(cartCheckout)cartCheckout.addEventListener('click',()=>{
   const url=waMessageUrl(checkoutMessage(name));
   window.open(url,'_blank','noopener');
 });
+
+
+document.addEventListener('change',e=>{
+  const select=e.target.closest('.product-option');
+  if(!select) return;
+  const card=select.closest('.menu-product-card');
+  const selected=select.selectedOptions?.[0];
+  const strong=card?.querySelector('.menu-price strong');
+  if(strong && selected){
+    const label=selected.dataset.cartLabel||selected.textContent;
+    strong.textContent=label.replace(' · ',' — ');
+  }
+});
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('cart-open'))closeCart();});
 loadCart();renderCart();
+
+/* ===== Product image galleries ===== */
+function setGallerySlide(gallery,index){
+  const slides=[...gallery.querySelectorAll('[data-slide]')];
+  const dots=[...gallery.querySelectorAll('[data-gallery-dot]')];
+  if(!slides.length) return;
+  const next=((index%slides.length)+slides.length)%slides.length;
+  gallery.dataset.index=String(next);
+  slides.forEach((slide,i)=>slide.classList.toggle('is-active',i===next));
+  dots.forEach((dot,i)=>dot.classList.toggle('is-active',i===next));
+}
+document.querySelectorAll('[data-gallery]').forEach(gallery=>{
+  setGallerySlide(gallery,0);
+  gallery.querySelector('[data-gallery-prev]')?.addEventListener('click',()=>setGallerySlide(gallery,(Number(gallery.dataset.index)||0)-1));
+  gallery.querySelector('[data-gallery-next]')?.addEventListener('click',()=>setGallerySlide(gallery,(Number(gallery.dataset.index)||0)+1));
+  gallery.querySelectorAll('[data-gallery-dot]').forEach(dot=>dot.addEventListener('click',()=>setGallerySlide(gallery,Number(dot.dataset.galleryDot)||0)));
+  let startX=null;
+  gallery.addEventListener('touchstart',e=>{startX=e.touches?.[0]?.clientX??null;},{passive:true});
+  gallery.addEventListener('touchend',e=>{
+    if(startX===null) return;
+    const endX=e.changedTouches?.[0]?.clientX??startX;
+    const delta=endX-startX; startX=null;
+    if(Math.abs(delta)>45) setGallerySlide(gallery,(Number(gallery.dataset.index)||0)+(delta<0?1:-1));
+  },{passive:true});
+});
+
+/* ===== Personalized cake videos: poster + centered play, permanently muted ===== */
+document.querySelectorAll('.video-inspiration-card').forEach(card=>{
+  const video=card.querySelector('video');
+  const button=card.querySelector('[data-video-play]');
+  if(!video||!button) return;
+  video.muted=true;
+  video.defaultMuted=true;
+  button.addEventListener('click',()=>{
+    video.muted=true;
+    if(video.paused){
+      document.querySelectorAll('.video-inspiration-card video').forEach(other=>{if(other!==video&&!other.paused)other.pause();});
+      video.play().then(()=>card.classList.add('is-playing')).catch(()=>{});
+    }else{
+      video.pause(); card.classList.remove('is-playing');
+    }
+  });
+  video.addEventListener('pause',()=>card.classList.remove('is-playing'));
+  video.addEventListener('ended',()=>{card.classList.remove('is-playing');video.currentTime=0;});
+  video.addEventListener('volumechange',()=>{if(!video.muted) video.muted=true;});
+});
